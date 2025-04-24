@@ -1,28 +1,25 @@
-// src/pages/search.tsx
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import DogCard from '@/components/DogCard';
-import { getBreeds } from '@/services/DogService';
-
-interface Dog {
-  id: string;
-  img: string;
-  name: string;
-  age: number;
-  zip_code: string;
-  breed: string;
-}
+import { useEffect, useState } from 'react'
+import DogCard from '@/components/DogCard'
+import {
+  getBreeds,
+  searchDogs,
+  getDogsByIds,
+  matchDog,
+} from '@/services/DogService'
+import { Dog } from '@/utils/types'
 
 export default function SearchPage() {
-  const router = useRouter();
-  const [breeds, setBreeds] = useState<string[]>([]);
-  const [selectedBreed, setSelectedBreed] = useState('');
-  const [dogs, setDogs] = useState<Dog[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [page, setPage] = useState(0);
-  const size = 10;
+  const [breeds, setBreeds] = useState<string[]>([])
+  const [selectedBreed, setSelectedBreed] = useState('')
+  const [dogs, setDogs] = useState<Dog[]>([])
+  const [favorites, setFavorites] = useState<string[]>([])
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [page, setPage] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
 
+  const size = 12 // dogs per page
+
+  // Load breeds once on mount
   useEffect(() => {
     const loadBreeds = async () => {
       try {
@@ -32,24 +29,25 @@ export default function SearchPage() {
         console.error('Failed to load breeds:', err)
       }
     }
-  
+
     loadBreeds()
   }, [])
-  
+
+  // Load dogs whenever filter/sort/page changes
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDogs = async () => {
       try {
         setIsLoading(true)
-  
+
+        const offset = page * size
         const searchRes = await searchDogs({
           breeds: selectedBreed ? [selectedBreed] : undefined,
           sort: `breed:${sortOrder}`,
-          size: 12,
-          from,
+          size,
+          from: offset,
         })
-  
+
         const dogDetails = await getDogsByIds(searchRes.resultIds)
-        setDogIds(searchRes.resultIds)
         setDogs(dogDetails)
       } catch (err) {
         console.error('Error fetching dogs:', err)
@@ -57,86 +55,77 @@ export default function SearchPage() {
         setIsLoading(false)
       }
     }
-  
-    fetchData()
-  }, [selectedBreed, sortOrder, from])
-  
 
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (selectedBreed) params.append('breeds', selectedBreed);
-    params.append('sort', `breed:${sortOrder}`);
-    params.append('size', String(size));
-    params.append('from', String(page * size));
-
-    fetch(`/api/dogs/search?${params.toString()}`, { credentials: 'include' })
-      .then((res) => res.json())
-      .then(async (data) => {
-        const dogRes = await fetch('/api/dogs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(data.resultIds),
-        });
-        const dogData = await dogRes.json();
-        setDogs(dogData);
-      })
-      .catch(console.error);
-  }, [selectedBreed, sortOrder, page]);
+    fetchDogs()
+  }, [selectedBreed, sortOrder, page])
 
   const toggleFavorite = (id: string) => {
     setFavorites((prev) =>
       prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id]
-    );
-  };
+    )
+  }
 
   const generateMatch = async () => {
-    if (favorites.length === 0) return;
-    const res = await fetch('/api/dogs/match', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(favorites),
-    });
-    const data = await res.json();
-    alert(`🎉 Your matched dog ID: ${data.match}`);
-  };
+    if (favorites.length === 0) return
+
+    try {
+      const res = await matchDog(favorites)
+      alert(`🎉 Your matched dog ID: ${res.match}`)
+    } catch (err) {
+      console.error('Failed to generate match:', err)
+    }
+  }
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Find Your Perfect Pup 🐶</h1>
 
+      {/* Filters */}
       <div className="flex gap-4 mb-4">
         <select
           value={selectedBreed}
-          onChange={(e) => setSelectedBreed(e.target.value)}
+          onChange={(e) => {
+            setPage(0)
+            setSelectedBreed(e.target.value)
+          }}
           className="p-2 border rounded"
         >
           <option value="">All Breeds</option>
           {breeds.map((breed) => (
-            <option key={breed} value={breed}>{breed}</option>
+            <option key={breed} value={breed}>
+              {breed}
+            </option>
           ))}
         </select>
 
         <button
           className="p-2 bg-blue-500 text-white rounded"
-          onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+          onClick={() => {
+            setPage(0)
+            setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+          }}
         >
           Sort: {sortOrder === 'asc' ? 'A → Z' : 'Z → A'}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {dogs.map((dog) => (
-          <DogCard
-            key={dog.id}
-            dog={dog}
-            isFavorited={favorites.includes(dog.id)}
-            onToggleFavorite={() => toggleFavorite(dog.id)}
-          />
-        ))}
-      </div>
+      {/* Dog Grid */}
+      {isLoading ? (
+        <p className="text-center text-gray-500">Loading dogs...</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {dogs.map((dog) => (
+            <DogCard
+              key={dog.id}
+              dog={dog}
+              isFavorited={favorites.includes(dog.id)}
+              onToggleFavorite={() => toggleFavorite(dog.id)}
+            />
+          ))}
+        </div>
+      )}
 
+      {/* Pagination */}
       <div className="mt-6 flex justify-between">
         <button
           className="p-2 bg-gray-300 rounded"
@@ -154,6 +143,7 @@ export default function SearchPage() {
         </button>
       </div>
 
+      {/* Match Button */}
       <div className="mt-6 text-center">
         <button
           className="px-6 py-3 bg-pink-600 text-white rounded text-lg"
@@ -163,5 +153,5 @@ export default function SearchPage() {
         </button>
       </div>
     </div>
-  );
+  )
 }
