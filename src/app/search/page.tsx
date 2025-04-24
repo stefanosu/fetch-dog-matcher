@@ -151,14 +151,12 @@ export default function SearchPage() {
       </div>
 
       {/* Match Button */}
-      <div className="mt-6 text-center">
-        <button
-          className="px-6 py-3 bg-pink-600 text-white rounded text-lg"
-          onClick={generateMatch}
-        >
-          ❤️ Generate Match
-        </button>
-      </div>
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2">
+  <button className="px-6 py-3 bg-pink-600 text-white rounded text-lg shadow-lg">
+    ❤️ Generate Match
+  </button>
+</div>
+
     </div>
   )
 }
