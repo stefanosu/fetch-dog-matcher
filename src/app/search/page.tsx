@@ -8,6 +8,8 @@ import {
   matchDog,
 } from '@/services/DogService'
 import { Dog } from '@/utils/types'
+import LoadingSkeleton from '@/components/LoadingSkeletion'
+import EmptyState from '@/components/EmptyState'
 
 export default function SearchPage() {
   const [breeds, setBreeds] = useState<string[]>([])
@@ -112,19 +114,23 @@ export default function SearchPage() {
 
       {/* Dog Grid */}
       {isLoading ? (
-        <p className="text-center text-gray-500">Loading dogs...</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {dogs.map((dog) => (
-            <DogCard
-              key={dog.id}
-              dog={dog}
-              isFavorited={favorites.includes(dog.id)}
-              onToggleFavorite={() => toggleFavorite(dog.id)}
-            />
-          ))}
-        </div>
-      )}
+  <LoadingSkeleton />
+) : dogs.length === 0 ? (
+  <EmptyState />
+) : (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    {dogs.map((dog) => (
+      <DogCard
+        key={dog.id}
+        dog={dog}
+        isFavorited={favorites.includes(dog.id)}
+        onToggleFavorite={() => toggleFavorite(dog.id)}
+      />
+    ))}
+  </div>
+)}
+
+
 
       {/* Pagination */}
       <div className="mt-6 flex justify-between">
