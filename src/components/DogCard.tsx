@@ -1,38 +1,37 @@
-// src/components/DogCard.tsx
-import React from 'react'
+'use client'
+
 import { Dog } from '@/utils/types'
 
-type DogCardProps = {
+interface DogCardProps {
   dog: Dog
   isFavorited: boolean
-  onToggleFavorite: (id: string) => void
+  onToggleFavorite: () => void
 }
 
-const DogCard: React.FC<DogCardProps> = ({ dog, isFavorited, onToggleFavorite }) => {
+export default function DogCard({ dog, isFavorited, onToggleFavorite }: DogCardProps) {
   return (
-    <div className="border rounded-xl p-4 shadow-md bg-white flex flex-col items-center text-center hover:shadow-lg transition duration-200">
+    <div className="border rounded-lg shadow hover:shadow-lg transition p-4 flex flex-col justify-between h-full">
       <img
         src={dog.img}
-        alt={dog.name}
-        className="w-32 h-32 object-cover rounded-full border mb-3"
+        alt={`Photo of ${dog.name}`}
+        className="rounded-lg w-full h-48 object-cover mb-4"
       />
-      <h2 className="text-lg font-bold">{dog.name}</h2>
-      <p className="text-sm text-gray-600 mb-1">{dog.breed}</p>
-      <p className="text-sm">Age: {dog.age}</p>
-      <p className="text-sm">Zip: {dog.zip_code}</p>
+
+      <div className="flex-1">
+        <h3 className="font-bold text-xl mb-1 text-gray-800">{dog.name}</h3>
+        <p className="text-sm text-gray-500 mb-1">{dog.breed}</p>
+        <p className="text-sm text-gray-400">{dog.age} years old • {dog.zip_code}</p>
+      </div>
 
       <button
-        onClick={() => onToggleFavorite(dog.id)}
-        className={`mt-3 px-4 py-1 rounded-full border transition duration-200 ${
-          isFavorited
-            ? 'bg-pink-500 text-white border-pink-500'
-            : 'bg-white text-pink-500 border-pink-500 hover:bg-pink-100'
-        }`}
+        aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+        onClick={onToggleFavorite}
+        className={`mt-4 w-full px-4 py-2 rounded-md text-white text-sm font-semibold ${
+          isFavorited ? 'bg-pink-600 hover:bg-pink-700' : 'bg-blue-500 hover:bg-blue-600'
+        } focus:outline-none focus:ring-2 focus:ring-pink-400 transition`}
       >
-        {isFavorited ? '💖 Favorited' : '🤍 Favorite'}
+        {isFavorited ? '💔 Unfavorite' : '❤️ Favorite'}
       </button>
     </div>
   )
 }
-
-export default DogCard
