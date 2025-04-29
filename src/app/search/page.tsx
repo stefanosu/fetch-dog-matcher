@@ -1,4 +1,5 @@
 'use client'
+
 import { useEffect, useState } from 'react'
 import DogCard from '@/components/DogCard'
 import {
@@ -8,8 +9,9 @@ import {
   matchDog,
 } from '@/services/DogService'
 import { Dog } from '@/utils/types'
-import LoadingSkeleton from '@/components/LoadingSkeletion'
+import LoadingSkeleton from '@/components/LoadingSkeleton'
 import EmptyState from '@/components/EmptyState'
+import toast from 'react-hot-toast'
 
 export default function SearchPage() {
   const [breeds, setBreeds] = useState<string[]>([])
@@ -20,9 +22,8 @@ export default function SearchPage() {
   const [page, setPage] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
 
-  const size = 12 // dogs per page
+  const size = 12
 
-  // Load breeds once on mount
   useEffect(() => {
     const loadBreeds = async () => {
       try {
@@ -36,13 +37,12 @@ export default function SearchPage() {
     loadBreeds()
   }, [])
 
-  // Load dogs whenever filter/sort/page changes
   useEffect(() => {
     const fetchDogs = async () => {
       try {
         setIsLoading(true)
-
         const offset = page * size
+
         const searchRes = await searchDogs({
           breeds: selectedBreed ? [selectedBreed] : undefined,
           sort: `breed:${sortOrder}`,
@@ -73,9 +73,10 @@ export default function SearchPage() {
 
     try {
       const res = await matchDog(favorites)
-      alert(`🎉 Your matched dog ID: ${res.match}`)
+      toast.success(`🎉 You matched with dog ID: ${res.match}`)
     } catch (err) {
-      console.error('Failed to generate match:', err)
+      toast.error('Failed to generate match')
+      console.error('Match error:', err)
     }
   }
 
@@ -114,23 +115,21 @@ export default function SearchPage() {
 
       {/* Dog Grid */}
       {isLoading ? (
-  <LoadingSkeleton />
-) : dogs.length === 0 ? (
-  <EmptyState />
-) : (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    {dogs.map((dog) => (
-      <DogCard
-        key={dog.id}
-        dog={dog}
-        isFavorited={favorites.includes(dog.id)}
-        onToggleFavorite={() => toggleFavorite(dog.id)}
-      />
-    ))}
-  </div>
-)}
-
-
+        <LoadingSkeleton />
+      ) : dogs.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {dogs.map((dog) => (
+            <DogCard
+              key={dog.id}
+              dog={dog}
+              isFavorited={favorites.includes(dog.id)}
+              onToggleFavorite={() => toggleFavorite(dog.id)}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
       <div className="mt-6 flex justify-between">
@@ -150,13 +149,17 @@ export default function SearchPage() {
         </button>
       </div>
 
-      {/* Match Button */}
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2">
-  <button className="px-6 py-3 bg-pink-600 text-white rounded text-lg shadow-lg">
-    ❤️ Generate Match
-  </button>
-</div>
-
+      {/* Sticky Match Button */}
+      {favorites.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+          <button
+            onClick={generateMatch}
+            className="px-6 py-3 bg-pink-600 text-white rounded text-lg shadow-lg hover:bg-pink-700 transition"
+          >
+            ❤️ Generate Match
+          </button>
+        </div>
+      )}
     </div>
   )
 }
