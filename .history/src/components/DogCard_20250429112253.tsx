@@ -1,7 +1,6 @@
 'use client'
 
 import { Dog } from '@/utils/types'
-import Image from 'next/image'
 
 interface DogCardProps {
   dog: Dog
@@ -11,14 +10,12 @@ interface DogCardProps {
 
 export default function DogCard({ dog, isFavorited, onToggleFavorite }: DogCardProps) {
   return (
-    <div className="max-w-[200px] w-full border rounded-[20px] shadow hover:shadow-lg transition p-4 flex flex-col justify-between h-full bg-white">
-    <div className="aspect-[4/3] overflow-hidden rounded-[20px] mb-4">
-      <Image
+    <div className="max-w-xs w-full border rounded-lg shadow hover:shadow-lg transition p-4 flex flex-col justify-between h-full bg-white">
+    <div className="aspect-[4/3] overflow-hidden rounded-2xl mb-4">
+      <img
         src={dog.img}
         alt={`Photo of ${dog.name}`}
         className="w-full h-full object-cover transform hover:scale-105 transition duration-300"
-        width={200}
-        height={150}
       />
     </div>
   
