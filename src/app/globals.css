@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  background: linear-gradient(
+    to bottom right,
+    #f3f4f6,
+    #e5e7eb
+  );
+  min-height: 100vh;
+}
+
+@layer components {
+  .card {
+    @apply bg-white/80 backdrop-blur-sm;
+  }
+} 
